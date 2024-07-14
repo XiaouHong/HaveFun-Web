@@ -1,0 +1,20 @@
+body {
+    font-family: 'Microsoft JhengHei', '微軟正黑體', 'Microsoft YaHei', sans-serif;
+}
+.content-box {
+    /* position: absolute; */
+    /* right: 0; */
+    /* top: 70px; */
+    /* bottom: 0; */
+    /* padding-bottom: 30px; */
+    -webkit-transition: left 0.3s ease-in-out;
+    transition: left 0.3s ease-in-out;
+    /* background: #ebf2f7; */
+  }
+  .content {
+    width: auto;
+    height: 100%;
+    padding: 50px;
+    /* overflow-y: scroll; */
+    box-sizing: border-box;
+  }

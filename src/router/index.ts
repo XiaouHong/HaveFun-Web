@@ -1,9 +1,10 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
-// import Tool from '@/utils/tool'
-// import * as Enum from '@/utils/enum'
-// import LoginService from '@/service/login'
+import Tool from '../utils/tool'
+import * as Enum from '../utils/enum'
+import LoginService from '../service/login'
+import { useInfoStore } from '../store/info'
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -146,42 +147,18 @@ const router = createRouter({
     routes
 })
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
     NProgress.start()
-    // const tool = new Tool()
-    // const infoStore = useInfoStore()
-    // const isCookie = await tool.checkCookie(Enum.COOKIE.TOKEN)
-    // const info = infoStore.info.ID != ''
-    // const login = isCookie || info
-    // if (to.query.token != undefined) {
-    //   const loginService = new LoginService()
-    //   const token = to.query.token
-    //   const response = await loginService.tokenLogin(token)
-    //   if (response.data.resultCode == Enum.API_RESULT_CODE.SUCCESS) {
-    //     infoStore.setBrowser(tool.checkBroswer)
-    //     await tool.setCookie(Enum.COOKIE.TOKEN, response.data.result.token, 60 * 60 * 12);
-    //     await infoStore.setInfo(response.data.result.token)
-    //     next('/')
-    //   } else {
-    //     next('/login')
-    //   }
-    // }
-    // else {
-    //   if (!info && isCookie) {
-    //     const cookie = tool.getCookie(Enum.COOKIE.TOKEN)
-    //     if (cookie != '') {
-    //       await infoStore.setInfo(cookie)
-    //     }
-    //   }
-    // }
-    // const login = infoStore.info.ID != ''
-    // if (!login && to.path !== '/login') {
-    //   next('/login')
-    // } else if (to.meta.functionID && infoStore.searchAccess(to.meta.functionID)) {
-    //   next('/403')
-    // } else {
-    //   next()
-    // }
+    const tool = new Tool()
+    const infoStore = useInfoStore()
+    if(to.query.code != undefined && to.query.state != undefined) {
+        const loginService = new LoginService()
+        const response = await loginService.tokenLogin(to.query.code, to.query.state)
+        if (response.data.resultCode == Enum.api_result_code.success){
+            await tool.setCookie(Enum.COOKIE.TOKEN, response.data.result.token, 60 * 60 * 12);
+            await infoStore.setInfo(response.data.result.token)
+        }
+    }
     next()
 })
 
