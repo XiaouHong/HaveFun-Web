@@ -9,8 +9,8 @@
                     </div>
                 </transition>
             </router-view>
-            <v-footer />
         </div>
+        <v-footer />
     </div>
 </template>
 

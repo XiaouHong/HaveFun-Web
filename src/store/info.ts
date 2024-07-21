@@ -1,14 +1,11 @@
 import { defineStore } from 'pinia'
-import * as Enum from '../utils/enum'
 import { jwtDecode } from 'jwt-decode'
 
 interface Info {
   ID: string,
-  name: string,
-  account: string,
+  nickName: string,
+  email: string,
   auth: number,
-  notifyCode: string,
-  browser: Enum.browser,
   access: string[],
   login: boolean
 }
@@ -18,12 +15,10 @@ export const useInfoStore = defineStore('info', {
     return {
       info: <Info> {
         ID: '',
-        name: '',
-        account: '',
+        nickName: '',
+        email: '',
         auth: 0,
-        notifyCode: '',
         access: [],
-        browser: Enum.browser.chrome,
         login: false
       }
 
@@ -32,18 +27,15 @@ export const useInfoStore = defineStore('info', {
   actions: {
     setInfo (token: string) {
       const decoded = jwtDecode(token)
-      this.setSubToInfo(decoded.sub)
+      console.log(decoded)
+      // this.setSubToInfo(decoded.sub)
       this.info.login = true
     },
     setSubToInfo (sub : any) {
-      console.log(sub)
-    //   this.info.name = sub[0]
-    //   this.info.ID = sub[1]
-    //   this.info.auth = sub[2]
-    //   this.info.access = sub[3]
-    },
-    setBrowser (val: any) {
-      this.info.browser = val
+      // this.info.ID = 
+      this.info.email = sub[0]
+      this.info.nickName = sub[1]
+      this.info.access = sub[2]
     },
     searchAccess (functionID:any) {
       return this.info.access.includes(functionID)
@@ -53,10 +45,9 @@ export const useInfoStore = defineStore('info', {
     },
     logout () {
       this.info.ID = ''
-      this.info.name = ''
-      this.info.account = ''
+      this.info.nickName = ''
+      this.info.email = ''
       this.info.auth = 0
-      this.info.notifyCode = ''
     }
   }
 })

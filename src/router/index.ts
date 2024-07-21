@@ -73,8 +73,8 @@ const routes: Array<RouteRecordRaw> = [
                 component: () => import('../views/Front.vue')
             },
             {
-                path: '/Schedule',
-                name: 'schedule',
+                path: '/schedule',
+                name: 'Schedule',
                 meta: {
                     title: '計劃行程'
                 },
@@ -101,7 +101,27 @@ const routes: Array<RouteRecordRaw> = [
                 meta: {
                     title: '首頁'
                 },
-                component: () => import('../views/Front.vue')
+                component: () => import('../views/Front.vue'),
+                beforeEnter: async (to, _from, next) => {
+                    if (to.query.code != undefined && to.query.state != undefined) {
+                        const tool = new Tool()
+                        const infoStore = useInfoStore()
+                        const loginService = new LoginService()
+                        const response = await loginService.callback(to.query.code, to.query.state)
+                        if (response.data.resultCode == Enum.api_result_code.success) {
+                            if (response.data.result.isMember) {
+                                await tool.setCookie(Enum.COOKIE.TOKEN, response.data.result.token, 60 * 60 * 12);
+                                await infoStore.setInfo(response.data.result.token)
+                            } else {
+                                infoStore.info.nickName = response.data.result.name
+                                infoStore.info.email = response.data.result.mail
+                                next('/register')
+                            }
+                        }
+                    }else {
+                        next()
+                    }
+                }
             }, {
                 path: '/communicate',
                 name: 'Communicate',
@@ -137,6 +157,13 @@ const routes: Array<RouteRecordRaw> = [
                     title: '登入'
                 },
                 component: () => import('../views/Login.vue')
+            }, {
+                path: '/register',
+                name: 'Register',
+                meta: {
+                    title: '登入'
+                },
+                component: () => import('../views/Register.vue')
             }
         ]
     }
@@ -147,18 +174,8 @@ const router = createRouter({
     routes
 })
 
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (_to, _from, next) => {
     NProgress.start()
-    const tool = new Tool()
-    const infoStore = useInfoStore()
-    if(to.query.code != undefined && to.query.state != undefined) {
-        const loginService = new LoginService()
-        const response = await loginService.tokenLogin(to.query.code, to.query.state)
-        if (response.data.resultCode == Enum.api_result_code.success){
-            await tool.setCookie(Enum.COOKIE.TOKEN, response.data.result.token, 60 * 60 * 12);
-            await infoStore.setInfo(response.data.result.token)
-        }
-    }
     next()
 })
 
