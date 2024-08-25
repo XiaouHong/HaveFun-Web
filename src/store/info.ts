@@ -6,7 +6,7 @@ interface Info {
   nickName: string,
   email: string,
   auth: number,
-  access: string[],
+  access: string,
   login: boolean
 }
 
@@ -18,7 +18,7 @@ export const useInfoStore = defineStore('info', {
         nickName: '',
         email: '',
         auth: 0,
-        access: [],
+        access: 'A01,P01,C01',
         login: false
       }
 
@@ -28,26 +28,24 @@ export const useInfoStore = defineStore('info', {
     setInfo (token: string) {
       const decoded = jwtDecode(token)
       console.log(decoded)
-      // this.setSubToInfo(decoded.sub)
-      this.info.login = true
+      this.setSubToInfo(decoded)
     },
-    setSubToInfo (sub : any) {
-      // this.info.ID = 
-      this.info.email = sub[0]
-      this.info.nickName = sub[1]
-      this.info.access = sub[2]
+    setSubToInfo (decoded : any) {
+      this.info.email = decoded.email
+      this.info.ID = decoded.nameid
+      this.info.access = decoded.sub
+      this.info.nickName = decoded.unique_name
+      this.info.login = true
     },
     searchAccess (functionID:any) {
       return this.info.access.includes(functionID)
-    },
-    setAccess (val: []) {
-      this.info.access = val;
     },
     logout () {
       this.info.ID = ''
       this.info.nickName = ''
       this.info.email = ''
       this.info.auth = 0
+      this.info.login = false
     }
   }
 })

@@ -24,13 +24,14 @@
                 <div id="login_form">
                     <el-form :label-position="'top'">
                         <el-form-item label="信箱" style="width: 300px">
-                            <el-input v-model="login.mail" />
+                            <el-input v-model="loginForm.mail" placeholder="請輸入信箱" />
                         </el-form-item>
                         <el-form-item label="密碼" style="width: 300px">
-                            <el-input v-model="login.password" show-password />
+                            <el-input v-model="loginForm.password" placeholder="請輸入密碼" type="password"
+                                @keyup.enter="login()" show-password />
                         </el-form-item>
                     </el-form>
-                    <el-button>登入</el-button>
+                    <el-button @click="login()">登入</el-button>
                     <br>
                     <p class="text"> — 還不是會員？ — </p>
                     <br>
@@ -44,19 +45,28 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import LoginService from '../service/login'
+import MemberService from '../service/member'
 import * as Enum from '../utils/enum'
+import Tool from '../utils/tool'
 import { useRouter } from 'vue-router'
+import * as Interface from '../utils/interface'
+import { ElMessage } from 'element-plus'
+import { useInfoStore } from '../store/info'
 
 // =======================
 // 類別實例
 // =======================
 const loginService = new LoginService()
+const memberService = new MemberService()
 const router = useRouter()
+const tool = new Tool()
+const infoStore = useInfoStore()
 
-const login = reactive({
+const loginForm: Interface.Login = reactive({
     mail: '',
     password: ''
 })
+
 const srcList = [{
     'img': '/src/assets/img/one.jpg'
 }, {
@@ -70,6 +80,22 @@ const authorize = async () => {
     const response = await loginService.googleAuthorize();
     if (response.data.resultCode === Enum.api_result_code.success) {
         window.location.href = response.data.result
+    }
+}
+
+const login = async () => {
+    if ((loginForm.mail == '' || loginForm.mail == undefined) || (loginForm.password == '' || loginForm.password == undefined)) {
+        ElMessage.error('未填寫郵箱或密碼')
+        return
+    }
+    const response = await memberService.login(loginForm);
+    if (response.data.resultCode === Enum.api_result_code.success) {
+        await tool.setCookie(Enum.COOKIE.TOKEN, response.data.result, 60 * 60 * 12);
+        await infoStore.setInfo(response.data.result)
+        ElMessage.success('登入成功')
+        router.push('/')
+    } else {
+        ElMessage.error('登入失敗' + response.data.resultMessage)
     }
 }
 </script>

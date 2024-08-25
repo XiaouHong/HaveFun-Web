@@ -7,35 +7,56 @@
         </div>
         <div style="display: flex;">
             <template v-for="item in pages">
-                <template v-if="item.subs">
-                    <el-sub-menu :index="item.index" :key="item.index">
-                        <template #title>
+                <div v-if="item.subs?.find(sub => sub.available) != undefined">
+                    <template v-if="item.subs">
+                        <el-sub-menu :index="item.index" :key="item.index">
+                            <template #title>
+                                <span class="title">{{ item.title }}</span>
+                            </template>
+                            <template v-for="subItem in item.subs" :key="subItem.index">
+                                <el-menu-item :index="subItem.index" v-if="subItem.available">
+                                    {{ subItem.title }}
+                                </el-menu-item>
+                            </template>
+                        </el-sub-menu>
+                    </template>
+                    <template v-else>
+                        <el-menu-item :index="item.index" :key="item.index" v-if="item.available">
                             <span class="title">{{ item.title }}</span>
-                        </template>
-                        <template v-for="subItem in item.subs" :key="subItem.index">
-                            <!-- <el-menu-item :index="subItem.index" v-if="subItem.available"> -->
-                            <el-menu-item :index="subItem.index">
-                                {{ subItem.title }}
-                            </el-menu-item>
-                        </template>
-                    </el-sub-menu>
-                </template>
-                <template v-else>
-                    <!-- <el-menu-item :index="item.index" :key="item.index" v-if="item.available"> -->
-                    <el-menu-item :index="item.index" :key="item.index">
-                        <span class="title">{{ item.title }}</span>
-                    </el-menu-item>
-                </template>
+                        </el-menu-item>
+                    </template>
+                </div>
             </template>
-            <el-menu-item :index="'/login'">登入</el-menu-item>
+            <el-menu-item @click="dialogVisible = true" v-if="infoStore.info.login">登出</el-menu-item>
+            <el-menu-item :index="'/login'" v-else>登入</el-menu-item>
         </div>
     </el-menu>
+    <v-dialog v-model:visible="dialogVisible" :title="'提醒'">
+        <template #content>
+            確定要登出嗎？
+        </template>
+        <template #footercontent>
+            <el-button @click="dialogVisible = false">取消</el-button>
+            <el-button @click="logout" type="primary">確認</el-button>
+        </template>
+    </v-dialog>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
+import { onMounted, computed, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { useInfoStore } from '../../store/info'
+import Tool from '../../utils/tool'
+import * as Enum from '../../utils/enum'
+import { useRouter } from 'vue-router'
+import vDialog from '../../components/Dialog.vue'
 
+// =======================
+// 類別實例
+// =======================
+const router = useRouter()
+const tool = new Tool()
+const infoStore = useInfoStore()
 const route = useRoute()
 const onRoutes = computed(() => {
     return route.path
@@ -43,6 +64,7 @@ const onRoutes = computed(() => {
 // =======================
 // 參數
 // =======================
+const dialogVisible = ref<Boolean>(false)
 const pages = reactive([
     {
         SystemID: 'Discovery',
@@ -54,6 +76,7 @@ const pages = reactive([
     {
         SystemID: 'Member',
         title: '會員',
+        available: false,
         index: '1',
         subs: [
             {
@@ -67,6 +90,7 @@ const pages = reactive([
     {
         SystemID: 'Attraction',
         title: '地點',
+        available: false,
         index: '2',
         subs: [
             {
@@ -86,6 +110,7 @@ const pages = reactive([
     {
         SystemID: 'Planning',
         title: '計劃',
+        available: false,
         index: '3',
         subs: [
             {
@@ -130,25 +155,27 @@ const pages = reactive([
     {
         SystemID: 'FriendShip',
         title: '好友',
+        available: false,
         index: '4',
         subs: [
             {
                 index: '/friendevent',
                 title: '好友動態',
                 available: false,
-                functionID: 'A01'
+                functionID: 'F01'
             },
             {
                 index: '/friendship',
                 title: '好友管理',
                 available: false,
-                functionID: 'A02'
+                functionID: 'F02'
             }
         ]
     },
     {
         SystemID: 'Communicate',
         title: '論壇',
+        available: false,
         index: '5',
         subs: [
             {
@@ -166,6 +193,31 @@ const pages = reactive([
         ]
     }
 ])
+// =======================
+// 組件載入
+// =======================
+onMounted(async () => {
+    await pages.forEach(x => {
+        if (x.subs) {
+            x.subs.forEach(el => {
+                infoStore.searchAccess(el.functionID) ? el.available = true : el.available = false;
+            });
+        } else {
+            infoStore.searchAccess(x.functionID) ? x.available = true : x.available = false
+        }
+    })
+})
+
+// =======================
+// 選單動作
+// =======================
+const logout = async () => {
+    dialogVisible.value = false
+    await tool.clearCookie(Enum.COOKIE.TOKEN)
+    await infoStore.logout
+    router.go(0)
+}
+
 </script>
 
 <style scoped>

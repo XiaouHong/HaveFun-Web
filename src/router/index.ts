@@ -112,13 +112,14 @@ const routes: Array<RouteRecordRaw> = [
                             if (response.data.result.isMember) {
                                 await tool.setCookie(Enum.COOKIE.TOKEN, response.data.result.token, 60 * 60 * 12);
                                 await infoStore.setInfo(response.data.result.token)
+                                next('/')
                             } else {
                                 infoStore.info.nickName = response.data.result.name
                                 infoStore.info.email = response.data.result.mail
                                 next('/register')
                             }
                         }
-                    }else {
+                    } else {
                         next()
                     }
                 }
@@ -176,6 +177,15 @@ const router = createRouter({
 
 router.beforeEach(async (_to, _from, next) => {
     NProgress.start()
+    const tool = new Tool()
+    const infoStore = useInfoStore()
+    const checkCookie = await tool.checkCookie(Enum.COOKIE.TOKEN)
+    if (checkCookie) {
+        const cookie = tool.getCookie(Enum.COOKIE.TOKEN)
+        if (cookie != '') {
+            await infoStore.setInfo(cookie)
+        }
+    }
     next()
 })
 
